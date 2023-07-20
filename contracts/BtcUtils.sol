@@ -3,8 +3,9 @@ pragma solidity ^0.8.18;
 
 /**
  * @title BtcUtils
- * @notice This library is based in this document
- * https://developer.bitcoin.org/reference/transactions.html#raw-transaction-format
+ * @notice This library contains functionality to make easier to work with Bitcoin transactions in Solidity.
+ * @notice This library is based in this document:
+ *   https://developer.bitcoin.org/reference/transactions.html#raw-transaction-format
  */
 library BtcUtils {
     uint8 private constant MAX_COMPACT_SIZE_LENGTH = 252;
@@ -16,6 +17,10 @@ library BtcUtils {
     uint8 private constant CHECK_BYTES_FROM_HASH = 4;
 
 
+    /**
+     * @notice This struct contains the information of a tx output separated by fields
+     * @notice Its just to have a structured representation of the output
+     **/
     struct TxRawOutput {
         uint64 value;
         bytes pkScript;
@@ -23,6 +28,9 @@ library BtcUtils {
         uint256 totalSize;
     }
 
+    /// @notice Parse a raw transaction to get an array of its outputs in a structured representation
+    /// @param rawTx the raw transaction
+    /// @return An array of `TxRawOutput` with the outputs of the transaction
     function getOutputs(bytes calldata rawTx) public pure returns (TxRawOutput[] memory) {
         uint currentPosition = 4;
 
@@ -70,7 +78,11 @@ library BtcUtils {
         return result;
     }
 
-    function parsePayToAddressScript(bytes calldata outputScript, bool mainnet) public pure returns (bytes memory) {
+    /// @notice Parse a raw pay-to-public-key-hash output script to get the corresponding address
+    /// @param outputScript the fragment of the raw transaction containing the raw output script
+    /// @param mainnet if the address to generate is from mainnet or testnet 
+    /// @return The address generated using the receiver's public key hash
+    function parsePayToPubKeyHash(bytes calldata outputScript, bool mainnet) public pure returns (bytes memory) {
         require(outputScript.length == 25, "Script has not the required length");
         require(
             outputScript[0] == 0x76 && // OP_DUP
@@ -104,7 +116,10 @@ library BtcUtils {
         return dataWithVersion;
     }
 
-    function parseOpReturnOuput(bytes calldata outputScript) public pure returns (bytes memory) {
+    /// @notice Parse a raw null-data output script to get its content
+    /// @param outputScript the fragment of the raw transaction containing the raw output script 
+    /// @return The content embedded inside the script
+    function parseNullDataScript(bytes calldata outputScript) public pure returns (bytes memory) {
         require(outputScript[0] == 0x6a, "Not OP_RETURN");
         require(
             outputScript.length > 2 && outputScript.length < 85,
@@ -120,6 +135,9 @@ library BtcUtils {
         return message;
     }
 
+    /// @notice Hash a bitcoin raw transaction to get its id (reversed double sha256)
+    /// @param btcTx the transaction to hash
+    /// @return The transaction id 
     function hashBtcTx(bytes calldata btcTx) public pure returns (bytes32) {
         bytes memory doubleSha256 = abi.encodePacked(sha256(abi.encodePacked(sha256(btcTx))));
         bytes1 aux;
