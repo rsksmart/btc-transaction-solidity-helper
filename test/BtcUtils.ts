@@ -2,6 +2,18 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { BtcUtils as BtcUtilsLib } from "../typechain-types";
 
+type RawTxOutput = {
+  value:string
+  pkScript:string
+  scriptSize:number
+  totalSize:number
+}
+
+type RawOutputs = {
+  raw:string
+  outputs: RawTxOutput[]
+}
+
 describe("BtcUtils", function () {
   let BtcUtils:BtcUtilsLib;
   
@@ -62,17 +74,7 @@ describe("BtcUtils", function () {
   });
 
   it('should parse btc raw transaction outputs correctly', async () => {
-    type RawTxOutput = {
-      value:string
-      pkScript:string
-      scriptSize:number
-      totalSize:number
-    }
-    type Test = {
-      raw:string
-      outputs: RawTxOutput[]
-    }
-    const transactions:Test[] = [
+    const transactions:RawOutputs[] = [
       {
         raw: '0x01000000000101f73a1ea2f2cec2e9bfcac67b277cc9e4559ed41cfc5973c154b7bdcada92e3e90100000000ffffffff029ea8ef00000000001976a9141770fa9929eee841aee1bfd06f5f0a178ef6ef5d88acb799f60300000000220020701a8d401c84fb13e6baf169d59684e17abd9fa216c8cc5b9fc63d622ff8c58d0400473044022051db70142aac24e8a13050cb0f61183704a7fe572c41a09caf5e7f56b7526f87022017d1a4b068a32af3dcea2d9a0e2f0d648c9f0f7fb01698d83091fd5b57f69ade01473044022028f29f5444ea4be2db3c6895e1414caa5cee9ab79faf1bf9bc12191f421de37102205af1df5158aa9c666f2d8d4d7c9da1ef96d28277f5d4b7c193e93e243a6641ae016952210375e00eb72e29da82b89367947f29ef34afb75e8654f6ea368e0acdfd92976b7c2103a1b26313f430c4b15bb1fdce663207659d8cac749a0e53d70eff01874496feff2103c96d495bfdd5ba4145e3e046fee45e84a8a48ad05bd8dbb395c011a32cf9f88053ae00000000',
         outputs:[
@@ -303,5 +305,139 @@ describe("BtcUtils", function () {
         expect(outputs[i].totalSize).to.eq(tx.outputs[i].totalSize.toString());
       }
     }
+  });
+
+  [
+    {
+      type: 'null-script',
+      raw: '0x010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff210310a3250452ecbe640c1002b03dc6dc0100000000000a2f70656761706f6f6c2f00000000020000000000000000266a24aa21a9eddbfb67dc0f51fb5baaadca59fdf7a14fd957307122b2c36a585bd070e8ecaba96b6125000000000017a914e25a7e08e6e072900eba0e4a933069846dd7e77b870120000000000000000000000000000000000000000000000000000000000000000000000000',
+      outputs: [
+        {
+          value: 0,
+          pkScript: '0x6a24aa21a9eddbfb67dc0f51fb5baaadca59fdf7a14fd957307122b2c36a585bd070e8ecaba9',
+          scriptSize: 38,
+          totalSize: 47n
+        },
+        {
+          value: 2449771,
+          pkScript: '0xa914e25a7e08e6e072900eba0e4a933069846dd7e77b87',
+          scriptSize: 23,
+          totalSize: 32n
+        }
+      ]
+    },
+    {
+      type: 'P2PKH',
+      raw: '0x0100000001477c50ac2967ff946354e19eee0e33183ecc19e6f4c8526487cccb49729a4438010000006a47304402206ebe70b56cfce62e05ec668b117e9e94797e7861bf49552c2664abffba0426d9022001ca8ec22ab9e47658ff8fa52c7ec61472ae1be50a78df8fd1d152207f0e285e0121034f798c0addbbdb5cca45e532440ac649f0e2c4c6fc12a0e3d5cb6f44ff589913ffffffff0210270000000000001976a914a7bb3acc90da95c20b1c62f19b82a2a53cf338bc88acd5ff0900000000001976a9140d82ca7a360a66730f328a018024c60b2df6289388ac00000000',
+      outputs: [
+        {
+          value: 10000n,
+          pkScript: '0x76a914a7bb3acc90da95c20b1c62f19b82a2a53cf338bc88ac',
+          scriptSize: 25,
+          totalSize: 34n
+        },
+        {
+          value: 655317n,
+          pkScript: '0x76a9140d82ca7a360a66730f328a018024c60b2df6289388ac',
+          scriptSize: 25,
+          totalSize: 34n
+        }
+      ]
+    },
+    {
+      type: 'P2TR',
+      raw: '0x01000000000101dc7e71826699b64e9360b507817a8131470931af6dd8ca77dc58c377948ce5520100000000fdffffff02172f00000000000022512065fef4f1d375728642658f3d9733bbedafff901dafd53286f7db5962c12466ee11680d00000000002251204aa5737545b86895c8326a9cb237f713850647c19652b5cac2eddd2974ca4dbc0140bedf6b99e10383f114c403162c465d2599b1413e9bb7197fe1172d25e3a5884a481964f1f11100a74c56e7e6188e59d8624af74eee46f9755416763b491cbfa600000000',
+      outputs: [
+        {
+          value: 12055n,
+          pkScript: '0x512065fef4f1d375728642658f3d9733bbedafff901dafd53286f7db5962c12466ee',
+          scriptSize: 34,
+          totalSize: 43n
+        },
+        {
+          value: 878609n,
+          pkScript: '0x51204aa5737545b86895c8326a9cb237f713850647c19652b5cac2eddd2974ca4dbc',
+          scriptSize: 34,
+          totalSize: 43n
+        }
+      ]
+    },
+    {
+      type: 'P2WPKH',
+      raw: '0x02000000000101f856190c1d28ea76a318d1a0b45eb47d083c2035529aeefcd70467d7891033450100000000feffffff0260440f00000000001600148d645a9586a633e1a226b9fa781dfe123b32ba14531e000000000000160014efba5a3dfcaa1a80b9a83b5ee1e5f695a4508cfa0247304402203eb5b593595675f1373bc0db197262f9807ed2088fab66d2d27edc039554666d022071d2d46db743e970d2f82c256e9970fb8d4fe359021e780aff62bf56980a325b012103377a28356ffdd7493c857be41ec46d263e75fa33271948b8ce443e86da728ccda3a22500',
+      outputs: [
+        {
+          value: 1000544n,
+          pkScript: '0x00148d645a9586a633e1a226b9fa781dfe123b32ba14',
+          scriptSize: 22,
+          totalSize: 31n
+        },
+        {
+          value: 7763n,
+          pkScript: '0x0014efba5a3dfcaa1a80b9a83b5ee1e5f695a4508cfa',
+          scriptSize: 22,
+          totalSize: 31n
+        }
+      ]
+    },
+    {
+      type: 'P2SH',
+      raw: '0x02000000000103b8794a1c0a21b4097c8f6e7e94a6e0d1a4682e56cacc557ae98e02f8b854bb27000000006a47304402206f448f0e77ed49ed992a0772c8799b6ba9b079defe6c8e7f590675f8df64b505022015e3f6e2229017be1f2d4fddf1071ab124e6f5b109a9c28655284645df1d881e012103c6b6ebd707d3ea7156e918e1ebb98397c2e3ec7ec029b6136f8d3e22a93892c5feffffff5e247025eed3f3981505214b21cbe2e5c134c54dd1b3b7d96c4f9182bb75bff40000000017160014dea8c30fe6dc8621ec298e5a502f100b8f6a688ffeffffffc470e4f1e00e63b0e1ece95a1979949e4f2471d7da28a8b65ca024da9a1c198e000000006a473044022020d4c8152f9e1032a99e50d42838bbf3eb0a1af2ae5ee4c5063e17e8616d82e2022055c1f231525eb81f0dfd236d923f223499f6a61a463deeb111d472670de4923d01210245b4129b08f7407a0d277e92e5a80c9857efbc843cfa76064cccf9c87b02b8ebfeffffff03db2410000000000017a914d4486d9481afeb59669966ef641d1be2d30a452587ada101000000000017a914b5dcdebc745f68e93e344cad411383389b15f42b87ed970100000000001976a914aa25b49710a2896df84248820c9c0d53cbc4971988ac000247304402201d857f01267ef0bf44a2f16e776733c0a430ebdc7a883ce68fdd7e07dae34b79022001e773ea33164d189694b58c7cc206ef0603e9b6b1d474f8f0abe18e32b22a01012103841f5308221e677e288593f037becd34b441aa5d7b2f54121836ed5cf07265a30003a32500',
+      outputs: [
+        {
+          value: 1058011n,
+          pkScript: '0xa914d4486d9481afeb59669966ef641d1be2d30a452587',
+          scriptSize: 23,
+          totalSize: 32n
+        },
+        {
+          value: 106925n,
+          pkScript: '0xa914b5dcdebc745f68e93e344cad411383389b15f42b87',
+          scriptSize: 23,
+          totalSize: 32n
+        },
+        {
+          value: 104429n,
+          pkScript: '0x76a914aa25b49710a2896df84248820c9c0d53cbc4971988ac',
+          scriptSize: 25,
+          totalSize: 34n
+        }
+      ]
+    },
+    {
+      type: 'P2PK',
+      raw: '0x01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0e04b3eb494d0103062f503253482fffffffff0100f2052a010000002321023824dbed2574c88ee375788d9569df0ea0b24ccfd2a1ca71ea2c744367de735bac00000000',
+      outputs: [
+        {
+          value: 5000000000n,
+          pkScript: '0x21023824dbed2574c88ee375788d9569df0ea0b24ccfd2a1ca71ea2c744367de735bac',
+          scriptSize: 35,
+          totalSize: 44n
+        }
+      ]
+    },
+    {
+      type: 'P2WSH',
+      raw: '0x0100000000010193a2db37b841b2a46f4e9bb63fe9c1012da3ab7fe30b9f9c974242778b5af8980000000000ffffffff01806fb307000000001976a914bbef244bcad13cffb68b5cef3017c7423675552288ac040047304402203cdcaf02a44e37e409646e8a506724e9e1394b890cb52429ea65bac4cc2403f1022024b934297bcd0c21f22cee0e48751c8b184cc3a0d704cae2684e14858550af7d01483045022100feb4e1530c13e72226dc912dcd257df90d81ae22dbddb5a3c2f6d86f81d47c8e022069889ddb76388fa7948aaa018b2480ac36132009bb9cfade82b651e88b4b137a01695221026ccfb8061f235cc110697c0bfb3afb99d82c886672f6b9b5393b25a434c0cbf32103befa190c0c22e2f53720b1be9476dcf11917da4665c44c9c71c3a2d28a933c352102be46dc245f58085743b1cc37c82f0d63a960efa43b5336534275fc469b49f4ac53ae00000000',
+      outputs: [
+        {
+          value: 129200000n,
+          pkScript: '0x76a914bbef244bcad13cffb68b5cef3017c7423675552288ac',
+          scriptSize: 25,
+          totalSize: 34n
+        }
+      ]
+    }
+  ].forEach((transaction) => {
+    it(`should parse a transaction with a ${transaction.type} output`, async () => {
+      const outputs = await BtcUtils.getOutputs(transaction.raw);
+      expect(outputs.length).to.eq(transaction.outputs.length);
+      for (let i = 0;  i < outputs.length; i++) {
+        expect(outputs[i].value).to.eq(transaction.outputs[i].value);
+        expect(outputs[i].pkScript).to.eq(transaction.outputs[i].pkScript);
+        expect(outputs[i].scriptSize).to.eq(transaction.outputs[i].scriptSize);
+        expect(outputs[i].totalSize).to.eq(transaction.outputs[i].totalSize);
+      }
+    });
   });
 });
