@@ -4,11 +4,15 @@ The intention of this library is to make easier to work with Bitcoin transaction
 
 ## Features
 
-The features of this library will include:
-* Bitcoin transaction output parsing: should be able to receive a raw tx and return an array of structs with the tx outputs
+The features of this library include:
+* Bitcoin transaction output parsing: is able to receive a raw tx and return an array of structs with the tx outputs
+* Bitcoin transaction hashing: is able to receive a raw tx and return its hash
+* Bitcoin transaction output script validation: is able to receive a raw output script, validate that is from a specific type and return a result. E.g. receive a raw null-data script and return the embeded data in it
+* Bitcoin address generation: is able to generate Bitcoin the address from a specific script and also to validate if a given address was generated from a script or not.
+
+### Future features
+These are some features that can increase the library capabilities in the future:
 * Bitcoin transaction input parsing: should be able to receive a raw tx and return an array of structs with the tx inputs
-* Bitcoin transaction hashing: should be able to receive a raw tx and return its hash
-* Bitcoin transaction input/output script validation: should be able to receive a raw input/output script, validate that is from a specific type and return a result. E.g. receive a raw null-data script and return the embeded data in it
 * Bitcoin transaction creation: utilities for building a raw transaction inside a contract
 
 ## Usage

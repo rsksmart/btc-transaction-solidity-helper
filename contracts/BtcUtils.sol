@@ -154,11 +154,9 @@ library BtcUtils {
         return result;
     }
 
-    /**
-        @dev Gets the timestamp of a Bitcoin block header
-        @param header The block header
-        @return The timestamp of the block header
-     */
+    /// @dev Gets the timestamp of a Bitcoin block header
+    /// @param header The block header
+    /// @return The timestamp of the block header
     function getBtcBlockTimestamp(bytes memory header) public pure returns (uint256) {
         // bitcoin header is 80 bytes and timestamp is 4 bytes from byte 68 to byte 71 (both inclusive)
         require(header.length == 80, "Invalid header length");
@@ -175,6 +173,27 @@ library BtcUtils {
         (uint32(uint8(bs[offset + 1])) << 8) |
         (uint32(uint8(bs[offset + 2])) << 16) |
         (uint32(uint8(bs[offset + 3])) << 24);
+    }
+
+    /// @notice Check if a pay-to-script-hash address belogs to a specific script
+    /// @param p2sh the pay-to-script-hash address
+    /// @param script the script to check
+    /// @param mainnet flag to specify if its a mainnet address
+    /// @return Whether the address belongs to the script or not
+    function validateP2SHAdress(bytes calldata p2sh, bytes calldata script, bool mainnet) public pure returns (bool) {
+        return p2sh.length == 25 && keccak256(p2sh) ==  keccak256(getP2SHAddressFromScript(script, mainnet));
+    }
+
+    /// @notice Generate a pay-to-script-hash address from a script
+    /// @param script the script to generate the address from
+    /// @param mainnet flag to specify if the output should be a mainnet address
+    /// @return The address generate from the script
+    function getP2SHAddressFromScript(bytes calldata script, bool mainnet) public pure returns (bytes memory) {
+        bytes20 scriptHash = ripemd160(abi.encodePacked(sha256(script)));
+        uint8 versionByte = mainnet ? 0x5 : 0xc4;
+        bytes memory versionAndHash = bytes.concat(bytes1(versionByte), scriptHash);
+        bytes4 checksum = bytes4(sha256(abi.encodePacked(sha256(versionAndHash))));
+        return bytes.concat(versionAndHash, checksum);
     }
 
     function parseCompactSizeInt(uint sizePosition, bytes memory array) private pure returns(uint64, uint16) {
