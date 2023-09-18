@@ -22,6 +22,29 @@ describe("BtcUtils", function () {
     BtcUtils = await BtcUtilsFactory.deploy();
   });
 
+  it("should validate P2SH address is generated from script", async () => {
+    expect(
+      await BtcUtils.validateP2SHAdress(
+        ethers.toBeHex(ethers.decodeBase58("2MwTN5tpBPjpdNohzAucisM8FFUsB5kddWs")),
+        "0x2096dce2f0d299c8b0de7c446cc45c0a3e24ec97e202aeb92ede94ee491bb03e6475522102cd53fc53a07f211641a677d250f6de99caf620e8e77071e811a28b3bcddf0be1210362634ab57dae9cb373a5d536e66a8c4f67468bbcfb063809bab643072d78a1242103c5946b3fbae03a654237da863c9ed534e0878657175b132b8ca630f245df04db53ae",
+        false
+      )
+    ).to.be.true
+
+    expect(
+      await BtcUtils.validateP2SHAdress(
+        ethers.toBeHex(ethers.decodeBase58("n1nka7jPhBYUxBEEcYefW9zrNrwityvFvr")),
+        "0x2096dce2f0d299c8b0de7c446cc45c0a3e24ec97e202aeb92ede94ee491bb03e6475522102cd53fc53a07f211641a677d250f6de99caf620e8e77071e811a28b3bcddf0be1210362634ab57dae9cb373a5d536e66a8c4f67468bbcfb063809bab643072d78a1242103c5946b3fbae03a654237da863c9ed534e0878657175b132b8ca630f245df04db53ae",
+        false
+      )
+    ).to.be.false
+  });
+
+  it("should calculate P2SH address from script", async () => {
+    const result = await BtcUtils.getP2SHAddressFromScript('0x2096dce2f0d299c8b0de7c446cc45c0a3e24ec97e202aeb92ede94ee491bb03e6475522102cd53fc53a07f211641a677d250f6de99caf620e8e77071e811a28b3bcddf0be1210362634ab57dae9cb373a5d536e66a8c4f67468bbcfb063809bab643072d78a1242103c5946b3fbae03a654237da863c9ed534e0878657175b132b8ca630f245df04db53ae', false);
+    expect(result).to.be.eq(ethers.toBeHex(ethers.decodeBase58("2MwTN5tpBPjpdNohzAucisM8FFUsB5kddWs")));
+  });
+
   it("should extract timestamp from btc block header", async () => {
     const btcHeader =
       "0x0080cf2a0857bdec9d66f5feb52d00d5061ff02a904112d9b0cd1ac401000000000000003d2d2b5733c820a1f07ce6e0acd2ea47f27016b49ccb405b1e3e5786f8ae962e3ce30c63bc292d1919856362";
