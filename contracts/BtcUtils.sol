@@ -120,19 +120,9 @@ library BtcUtils {
     /// @param outputScript the fragment of the raw transaction containing the raw output script 
     /// @return The content embedded inside the script
     function parseNullDataScript(bytes calldata outputScript) public pure returns (bytes memory) {
+        require(outputScript.length > 1,"Invalid size");
         require(outputScript[0] == 0x6a, "Not OP_RETURN");
-        require(
-            outputScript.length > 2 && outputScript.length < 85,
-            "Data out of bounds"
-        );
-
-        bytes memory message = new bytes(uint8(outputScript[1]));
-        for (uint8 i = 0; i < message.length; i++) {
-            // the addition of two is because the two first bytes correspond to
-            // the op_return opcode and the length of the message
-            message[i] = outputScript[i + 2]; 
-        }
-        return message;
+        return outputScript[1:];
     }
 
     /// @notice Hash a bitcoin raw transaction to get its id (reversed double sha256)
@@ -208,7 +198,10 @@ library BtcUtils {
         uint compactSizeBytes = 2 ** (maxSize - MAX_COMPACT_SIZE_LENGTH);
         require(compactSizeBytes <= MAX_BYTES_USED_FOR_COMPACT_SIZE, "unsupported compact size length");
 
-        uint64 result = uint64(calculateLittleEndianFragment(sizePosition + 1, sizePosition + compactSizeBytes, array));
+        // the adition of 1 is because the first byte is the indicator of the size and its not part of the number
+        uint64 result = uint64(
+            calculateLittleEndianFragment(sizePosition + 1, sizePosition + compactSizeBytes + 1, array)
+        );
         return (result, uint16(compactSizeBytes) + 1);
     }
 
@@ -222,7 +215,7 @@ library BtcUtils {
             "Range can't be bigger than array"
         );
         uint result = 0;
-        for (uint i = fragmentStart; i <= fragmentEnd; i++) {
+        for (uint i = fragmentStart; i < fragmentEnd; i++) {
             result += uint8(array[i]) *  uint64(2 ** (8 * (i - (fragmentStart))));
         }
         return result;
