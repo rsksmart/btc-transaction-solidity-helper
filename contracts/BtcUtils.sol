@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
+import "./OpCodes.sol";
+
 /**
  * @title BtcUtils
  * @notice This library contains functionality to make easier to work with Bitcoin transactions in Solidity.
@@ -10,11 +12,20 @@ pragma solidity ^0.8.18;
 library BtcUtils {
     uint8 private constant MAX_COMPACT_SIZE_LENGTH = 252;
     uint8 private constant MAX_BYTES_USED_FOR_COMPACT_SIZE = 8;
+
     uint8 private constant OUTPOINT_SIZE = 36;
     uint8 private constant OUTPUT_VALUE_SIZE = 8;
+
     uint8 private constant PUBKEY_HASH_SIZE = 20;
     uint8 private constant PUBKEY_HASH_START = 3;
-    uint8 private constant CHECK_BYTES_FROM_HASH = 4;
+    bytes1 private constant PUBKEY_HASH_MAINNET_BYTE = 0x00;
+    bytes1 private constant PUBKEY_HASH_TESTNET_BYTE = 0x6f;
+
+    uint8 private constant SCRIPT_HASH_SIZE = 20;
+    uint8 private constant SCRIPT_HASH_START = 2;
+    bytes1 private constant SCRIPT_HASH_MAINNET_BYTE = 0x05;
+    bytes1 private constant SCRIPT_HASH_TESTNET_BYTE = 0xc4;
+
 
 
     /**
@@ -78,42 +89,80 @@ library BtcUtils {
         return result;
     }
 
-    /// @notice Parse a raw pay-to-public-key-hash output script to get the corresponding address
+    /// @notice Parse a raw output script whose type is not known by the consumer. The function will
+    /// return the corresponding address if the type of the script is supported or an error if not.
+    /// For the addresses that are encoded with base58check the checksum bytes are not included in
+    /// the resulting byte array
+    /// @param outputScript the fragment of the raw transaction containing the raw output script
+    /// @param mainnet if the address to generate is from mainnet or testnet
+    /// @return The address bytes regarless of the output script type
+    function outputScriptToAddress(bytes calldata outputScript, bool mainnet) public pure returns (bytes memory) {
+        if (isP2PKHOutput(outputScript)) {
+            return parsePayToPubKeyHash(outputScript, mainnet);
+        }
+        if (isP2SHOutput(outputScript)) {
+            return parsePayToScriptHash(outputScript, mainnet);
+        }
+        // TODO add here P2WPKH, P2WSH and P2TR
+        revert("Unsupported script type");
+    }
+
+    /// @notice Check if a raw output script is a pay-to-public-key-hash output
+    /// @param pkScript the fragment of the raw transaction containing the raw output script
+    /// @return Whether the script has a pay-to-public-key-hash output structure or not
+    function isP2PKHOutput(bytes memory pkScript) public pure returns (bool) {
+        return pkScript.length == 25 &&
+            pkScript[0] == OpCodes.OP_DUP &&
+            pkScript[1] == OpCodes.OP_HASH160 &&
+            uint8(pkScript[2]) == PUBKEY_HASH_SIZE &&
+            pkScript[23] == OpCodes.OP_EQUALVERIFY &&
+            pkScript[24] ==  OpCodes.OP_CHECKSIG;
+    }
+
+    /// @notice Check if a raw output script is a pay-to-script-hash output
+    /// @param pkScript the fragment of the raw transaction containing the raw output script
+    /// @return Whether the script has a pay-to-script-hash output structure or not
+    function isP2SHOutput(bytes memory pkScript) public pure returns (bool) {
+        return pkScript.length == 23 &&
+            pkScript[0] == OpCodes.OP_HASH160 &&
+            uint8(pkScript[1]) == SCRIPT_HASH_SIZE &&
+            pkScript[22] == OpCodes.OP_EQUAL;
+    }
+
+    /// @notice Parse a raw pay-to-public-key-hash output script to get the corresponding address,
+    /// the resulting byte array doesn't include the checksum bytes of the base58check encoding at
+    /// the end
     /// @param outputScript the fragment of the raw transaction containing the raw output script
     /// @param mainnet if the address to generate is from mainnet or testnet 
     /// @return The address generated using the receiver's public key hash
     function parsePayToPubKeyHash(bytes calldata outputScript, bool mainnet) public pure returns (bytes memory) {
-        require(outputScript.length == 25, "Script has not the required length");
-        require(
-            outputScript[0] == 0x76 && // OP_DUP
-            outputScript[1] == 0xa9 && // OP_HASH160
-            outputScript[2] == 0x14 && // pubKeyHashSize, should be always 14 (20B)
-            outputScript[23] == 0x88 && // OP_EQUALVERIFY
-            outputScript[24] == 0xac, // OP_CHECKSIG
-            "Script has not the required structure"
-        );
+        require(isP2PKHOutput(outputScript), "Script hasn't the required structure");
 
-        bytes memory destinationAddress = new bytes(PUBKEY_HASH_SIZE);
+        bytes memory destinationAddress = new bytes(PUBKEY_HASH_SIZE + 1);
         for(uint8 i = PUBKEY_HASH_START; i < PUBKEY_HASH_SIZE + PUBKEY_HASH_START; i++) {
-            destinationAddress[i - PUBKEY_HASH_START] = outputScript[i];
+            destinationAddress[i - PUBKEY_HASH_START + 1] = outputScript[i];
         }
 
-        uint8 versionByte = mainnet? 0x00 : 0x6f;
-        bytes memory result = addVersionByte(bytes1(versionByte), destinationAddress);
-
-        return result;
+        destinationAddress[0] = mainnet? PUBKEY_HASH_MAINNET_BYTE : PUBKEY_HASH_TESTNET_BYTE;
+        return destinationAddress;
     }
 
-    function addVersionByte(bytes1 versionByte, bytes memory source) private pure returns (bytes memory) {
-        bytes memory dataWithVersion = new bytes(source.length + 1);
-        dataWithVersion[0] = versionByte;
+    /// @notice Parse a raw pay-to-script-hash output script to get the corresponding address,
+    /// the resulting byte array doesn't include the checksum bytes of the base58check encoding at
+    /// the end
+    /// @param outputScript the fragment of the raw transaction containing the raw output script
+    /// @param mainnet if the address to generate is from mainnet or testnet
+    /// @return The address generated using the script hash
+    function parsePayToScriptHash(bytes calldata outputScript, bool mainnet) public pure returns (bytes memory) {
+        require(isP2SHOutput(outputScript), "Script hasn't the required structure");
 
-        uint8 i;
-        for (i = 0; i < source.length; i++) {
-            dataWithVersion[i + 1] = source[i];
+        bytes memory destinationAddress = new bytes(SCRIPT_HASH_SIZE + 1);
+        for(uint8 i = SCRIPT_HASH_START; i < SCRIPT_HASH_SIZE + SCRIPT_HASH_START; i++) {
+            destinationAddress[i - SCRIPT_HASH_START + 1] = outputScript[i];
         }
 
-        return dataWithVersion;
+        destinationAddress[0] = mainnet? SCRIPT_HASH_MAINNET_BYTE : SCRIPT_HASH_TESTNET_BYTE;
+        return destinationAddress;
     }
 
     /// @notice Parse a raw null-data output script to get its content
@@ -121,7 +170,7 @@ library BtcUtils {
     /// @return The content embedded inside the script
     function parseNullDataScript(bytes calldata outputScript) public pure returns (bytes memory) {
         require(outputScript.length > 1,"Invalid size");
-        require(outputScript[0] == 0x6a, "Not OP_RETURN");
+        require(outputScript[0] == OpCodes.OP_RETURN, "Not OP_RETURN");
         return outputScript[1:];
     }
 
@@ -165,7 +214,8 @@ library BtcUtils {
         (uint32(uint8(bs[offset + 3])) << 24);
     }
 
-    /// @notice Check if a pay-to-script-hash address belogs to a specific script
+    /// @notice Check if a pay-to-script-hash address belogs to a specific script, expects the address
+    /// bytes to include the 4 checksum bytes at the end
     /// @param p2sh the pay-to-script-hash address
     /// @param script the script to check
     /// @param mainnet flag to specify if its a mainnet address
@@ -174,14 +224,15 @@ library BtcUtils {
         return p2sh.length == 25 && keccak256(p2sh) ==  keccak256(getP2SHAddressFromScript(script, mainnet));
     }
 
-    /// @notice Generate a pay-to-script-hash address from a script
+    /// @notice Generate a pay-to-script-hash address from a script, the resulting byte array already contains
+    /// the 4 checksum bytes at the end of it
     /// @param script the script to generate the address from
     /// @param mainnet flag to specify if the output should be a mainnet address
     /// @return The address generate from the script
     function getP2SHAddressFromScript(bytes calldata script, bool mainnet) public pure returns (bytes memory) {
         bytes20 scriptHash = ripemd160(abi.encodePacked(sha256(script)));
-        uint8 versionByte = mainnet ? 0x5 : 0xc4;
-        bytes memory versionAndHash = bytes.concat(bytes1(versionByte), scriptHash);
+        bytes1 versionByte = mainnet ? SCRIPT_HASH_MAINNET_BYTE : SCRIPT_HASH_TESTNET_BYTE;
+        bytes memory versionAndHash = bytes.concat(versionByte, scriptHash);
         bytes4 checksum = bytes4(sha256(abi.encodePacked(sha256(versionAndHash))));
         return bytes.concat(versionAndHash, checksum);
     }
