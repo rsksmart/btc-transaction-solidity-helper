@@ -72,7 +72,7 @@ library BtcUtils {
     }
 
     function extractRawOutput(uint position, bytes memory rawTx) private pure returns (TxRawOutput memory) {
-        TxRawOutput memory result;
+        TxRawOutput memory result = TxRawOutput(0, "", 0, 0);
         result.value = uint64(calculateLittleEndianFragment(position, position + OUTPUT_VALUE_SIZE, rawTx));
         position += OUTPUT_VALUE_SIZE;
 
