@@ -1,6 +1,6 @@
 {
   "name": "@rsksmart/btc-transaction-solidity-helper",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Solidity library with functions to work with Bitcoin transactions inside smart contracts",
   "main": "contracts",
   "files": [
