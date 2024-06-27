@@ -208,10 +208,10 @@ library BtcUtils {
         return destinationAddress;
     }
 
-    /// @notice Parse a raw pay-to-witness-pubkey-hash output script to get the corresponding address bytes,
-    /// the resulting byte is only the data part of the bech32 encoding and doesn't include the HRP
+    /// @notice Parse a raw pay-to-witness-pubkey-hash output script to get the corresponding address words,
+    /// the resulting words are only the data part of the bech32 encoding and doesn't include the HRP
     /// @param outputScript the fragment of the raw transaction containing the raw output script
-    /// @return The address generated using the pubkey hash
+    /// @return The address bech32 words generated using the pubkey hash
     function parsePayToWitnessPubKeyHash(bytes calldata outputScript) public pure returns (bytes memory) {
         require(isP2WPKHOutput(outputScript), "Script hasn't the required structure"); 
         uint length = 1 + total5BitWords(HASH160_SIZE);
@@ -224,10 +224,10 @@ library BtcUtils {
         return result;
     }
 
-    /// @notice Parse a raw pay-to-witness-script-hash output script to get the corresponding address bytes,
-    /// the resulting byte is only the data part of the bech32 encoding and doesn't include the HRP
+    /// @notice Parse a raw pay-to-witness-script-hash output script to get the corresponding address words,
+    /// the resulting words are only the data part of the bech32 encoding and doesn't include the HRP
     /// @param outputScript the fragment of the raw transaction containing the raw output script
-    /// @return The address generated using the script hash
+    /// @return The address bech32 words generated using the script hash
     function parsePayToWitnessScriptHash(bytes calldata outputScript) public pure returns (bytes memory) {
         require(isP2WSHOutput(outputScript), "Script hasn't the required structure");
         uint length = 1 + total5BitWords(SHA256_SIZE);
@@ -240,10 +240,10 @@ library BtcUtils {
         return result;
     }
 
-    /// @notice Parse a raw pay-to-taproot output script to get the corresponding address bytes,
-    /// the resulting byte is only the data part of the bech32m encoding and doesn't include the HRP
+    /// @notice Parse a raw pay-to-taproot output script to get the corresponding address words,
+    /// the resulting words are only the data part of the bech32m encoding and doesn't include the HRP
     /// @param outputScript the fragment of the raw transaction containing the raw output script
-    /// @return The address generated using the taproot pubkey hash
+    /// @return The address bech32m words generated using the taproot pubkey hash
     function parsePayToTaproot(bytes calldata outputScript) public pure returns (bytes memory) {
         require(isP2TROutput(outputScript), "Script hasn't the required structure");
         uint length = 1 + total5BitWords(TAPROOT_PUBKEY_SIZE);
