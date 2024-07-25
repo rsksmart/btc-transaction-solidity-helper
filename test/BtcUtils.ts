@@ -1,6 +1,10 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { BtcUtils as BtcUtilsLib } from "../typechain-types";
+import * as bs58check from "bs58check";
+import * as p2kph from "./test-data/p2pkh-outputs";
+import * as p2sh from "./test-data/p2sh-outputs";
+import * as b32 from "./test-data/bech32-outputs";
 
 type RawTxOutput = {
   value:string
@@ -460,6 +464,116 @@ describe("BtcUtils", function () {
         expect(outputs[i].pkScript).to.eq(transaction.outputs[i].pkScript);
         expect(outputs[i].scriptSize).to.eq(transaction.outputs[i].scriptSize);
         expect(outputs[i].totalSize).to.eq(transaction.outputs[i].totalSize);
+      }
+    });
+  });
+
+  describe('isP2PKHOutput function should', () => {
+    it('return true if the script is a P2PKH script', async () => {
+      for (const output of p2kph.testnetOutputs.concat(p2kph.mainnetOutputs)) {
+        const result = await BtcUtils.isP2PKHOutput(output.script);
+        expect(result).to.be.true;
+      }
+    });
+
+    it('return false if the script is not a P2PKH script', async () => {
+      const testCases = b32.testnetOutputs
+        .concat(b32.mainnetOutputs)
+        .concat(p2sh.testnetOutputs)
+        .concat(p2sh.mainnetOutputs);
+      for (const output of testCases) {
+        const result = await BtcUtils.isP2PKHOutput(output.script);
+        expect(result).to.be.false;
+      }
+    });
+  });
+
+  describe('isP2SHOutput function should', () => {
+    it('return true if the script is a P2SH script', async () => {
+      for (const output of p2sh.testnetOutputs.concat(p2sh.mainnetOutputs)) {
+        const result = await BtcUtils.isP2SHOutput(output.script);
+        expect(result).to.be.true;
+      }
+    });
+
+    it('return false if the script is not a P2SH script', async () => {
+      const testCases = b32.testnetOutputs
+        .concat(b32.mainnetOutputs)
+        .concat(p2kph.testnetOutputs)
+        .concat(p2kph.mainnetOutputs);
+      for (const output of testCases) {
+        const result = await BtcUtils.isP2SHOutput(output.script);
+        expect(result).to.be.false;
+      }
+    });
+  });
+
+  describe('parsePayToScriptHash function should', () => {
+    it('parse properly the P2SH scripts and return the corresponding address', async () => {
+      for (const output of p2sh.testnetOutputs) {
+        const address = await BtcUtils.parsePayToScriptHash(output.script, false);
+        expect(bs58check.encode(ethers.getBytes(address))).to.equal(output.address);
+      }
+      for (const output of p2sh.mainnetOutputs) {
+        const address = await BtcUtils.parsePayToScriptHash(output.script, true);
+        expect(bs58check.encode(ethers.getBytes(address))).to.equal(output.address);
+      }
+    });
+
+    it('fail if script doesn\'t have the required structure', async () => {
+      const testnetCases = b32.testnetOutputs.concat(p2kph.testnetOutputs);
+      const mainnetCases = b32.mainnetOutputs.concat(p2kph.mainnetOutputs);
+      for (const output of testnetCases) {
+        await expect(BtcUtils.parsePayToScriptHash(output.script, false)).to.be.revertedWith("Script hasn't the required structure");
+      }
+      for (const output of mainnetCases) {
+        await expect(BtcUtils.parsePayToScriptHash(output.script, true)).to.be.revertedWith("Script hasn't the required structure");
+      }
+    });
+  });
+
+  describe('parsePayToPubKeyHash function should', () => {
+    it('parse properly the P2PKH scripts and return the corresponding address', async () => {
+      for (const output of p2kph.testnetOutputs) {
+        const address = await BtcUtils.parsePayToPubKeyHash(output.script, false);
+        expect(bs58check.encode(ethers.getBytes(address))).to.equal(output.address);
+      }
+      for (const output of p2kph.mainnetOutputs) {
+        const address = await BtcUtils.parsePayToPubKeyHash(output.script, true);
+        expect(bs58check.encode(ethers.getBytes(address))).to.equal(output.address);
+      }
+    });
+
+    it('fail if script doesn\'t have the correct format', async () => {
+      const testnetCases = b32.testnetOutputs.concat(p2sh.testnetOutputs);
+      const mainnetCases = b32.mainnetOutputs.concat(p2sh.mainnetOutputs);
+      for (const output of testnetCases) {
+        await expect(BtcUtils.parsePayToPubKeyHash(output.script, false)).to.be.revertedWith("Script hasn't the required structure");
+      }
+      for (const output of mainnetCases) {
+        await expect(BtcUtils.parsePayToPubKeyHash(output.script, true)).to.be.revertedWith("Script hasn't the required structure");
+      }
+    });
+  });
+
+  describe('outputScriptToAddress function should', async () => {
+    it('parse the script and return the address if its a supported type', async () => {
+      for (const output of p2kph.testnetOutputs.concat(p2sh.testnetOutputs)) {
+        const address = await BtcUtils.outputScriptToAddress(output.script, false);
+        expect(bs58check.encode(ethers.getBytes(address))).to.equal(output.address);
+      }
+      for (const output of p2kph.mainnetOutputs.concat(p2sh.mainnetOutputs)) {
+        const address = await BtcUtils.outputScriptToAddress(output.script, true);
+        expect(bs58check.encode(ethers.getBytes(address))).to.equal(output.address);
+      }
+    });
+
+    it('fail if is an unsupported script type or script type cannot be converted to address', async() => {
+      for (const output of b32.mainnetOutputs) {
+        await expect(BtcUtils.outputScriptToAddress(output.script, true)).to.be.revertedWith("Unsupported script type");
+      }
+      for (const output of b32.testnetOutputs) {
+        await expect(BtcUtils.outputScriptToAddress(output.script, false)).to.be.revertedWith("Unsupported script type");
       }
     });
   });
