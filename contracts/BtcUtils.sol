@@ -46,6 +46,10 @@ library BtcUtils {
         uint256 totalSize;
     }
 
+    function version() external pure returns (string memory) {
+        return "0.2.1";
+    }
+
     /// @notice Parse a raw transaction to get an array of its outputs in a structured representation
     /// @param rawTx the raw transaction
     /// @return An array of `TxRawOutput` with the outputs of the transaction
