@@ -13,19 +13,26 @@ library BtcUtils {
     uint8 private constant MAX_COMPACT_SIZE_LENGTH = 252;
     uint8 private constant MAX_BYTES_USED_FOR_COMPACT_SIZE = 8;
 
+    uint private constant HASH160_SIZE = 20;
+    uint private constant SHA256_SIZE = 32;
+    uint private constant TAPROOT_PUBKEY_SIZE = 32;
+
     uint8 private constant OUTPOINT_SIZE = 36;
     uint8 private constant OUTPUT_VALUE_SIZE = 8;
 
-    uint8 private constant PUBKEY_HASH_SIZE = 20;
     uint8 private constant PUBKEY_HASH_START = 3;
     bytes1 private constant PUBKEY_HASH_MAINNET_BYTE = 0x00;
     bytes1 private constant PUBKEY_HASH_TESTNET_BYTE = 0x6f;
 
-    uint8 private constant SCRIPT_HASH_SIZE = 20;
     uint8 private constant SCRIPT_HASH_START = 2;
     bytes1 private constant SCRIPT_HASH_MAINNET_BYTE = 0x05;
     bytes1 private constant SCRIPT_HASH_TESTNET_BYTE = 0xc4;
 
+    uint private constant BECH32_WORD_SIZE = 5;
+    uint private constant BYTE_SIZE = 8;
+
+    bytes1 private constant WITNESS_VERSION_0 = 0x00;
+    bytes1 private constant WITNESS_VERSION_1 = 0x01;
 
 
     /**
@@ -37,6 +44,10 @@ library BtcUtils {
         bytes pkScript;
         uint256 scriptSize;
         uint256 totalSize;
+    }
+
+    function version() external pure returns (string memory) {
+        return "0.2.1";
     }
 
     /// @notice Parse a raw transaction to get an array of its outputs in a structured representation
@@ -103,7 +114,15 @@ library BtcUtils {
         if (isP2SHOutput(outputScript)) {
             return parsePayToScriptHash(outputScript, mainnet);
         }
-        // TODO add here P2WPKH, P2WSH and P2TR
+        if (isP2WPKHOutput(outputScript)) {
+            return parsePayToWitnessPubKeyHash(outputScript);
+        }
+        if (isP2WSHOutput(outputScript)) {
+            return parsePayToWitnessScriptHash(outputScript);
+        }
+        if (isP2TROutput(outputScript)) {
+            return parsePayToTaproot(outputScript);
+        }
         revert("Unsupported script type");
     }
 
@@ -111,10 +130,10 @@ library BtcUtils {
     /// @param pkScript the fragment of the raw transaction containing the raw output script
     /// @return Whether the script has a pay-to-public-key-hash output structure or not
     function isP2PKHOutput(bytes memory pkScript) public pure returns (bool) {
-        return pkScript.length == 25 &&
+        return pkScript.length == 5 + HASH160_SIZE &&
             pkScript[0] == OpCodes.OP_DUP &&
             pkScript[1] == OpCodes.OP_HASH160 &&
-            uint8(pkScript[2]) == PUBKEY_HASH_SIZE &&
+            uint8(pkScript[2]) == HASH160_SIZE &&
             pkScript[23] == OpCodes.OP_EQUALVERIFY &&
             pkScript[24] ==  OpCodes.OP_CHECKSIG;
     }
@@ -123,10 +142,38 @@ library BtcUtils {
     /// @param pkScript the fragment of the raw transaction containing the raw output script
     /// @return Whether the script has a pay-to-script-hash output structure or not
     function isP2SHOutput(bytes memory pkScript) public pure returns (bool) {
-        return pkScript.length == 23 &&
+        return pkScript.length == 3 + HASH160_SIZE &&
             pkScript[0] == OpCodes.OP_HASH160 &&
-            uint8(pkScript[1]) == SCRIPT_HASH_SIZE &&
+            uint8(pkScript[1]) == HASH160_SIZE &&
             pkScript[22] == OpCodes.OP_EQUAL;
+    }
+
+    /// @notice Check if a raw output script is a pay-to-witness-pubkey-hash output
+    /// @param pkScript the fragment of the raw transaction containing the raw output script
+    /// @return Whether the script has a pay-to-witness-pubkey-hash output structure or not
+    function isP2WPKHOutput(bytes memory pkScript) public pure returns (bool) {
+        return pkScript.length == 2 + HASH160_SIZE &&
+            pkScript[0] == OpCodes.OP_0 &&
+            uint8(pkScript[1]) == HASH160_SIZE;
+    }
+
+    /// @notice Check if a raw output script is a pay-to-witness-script-hash output
+    /// @param pkScript the fragment of the raw transaction containing the raw output script
+    /// @return Whether the script has a pay-to-witness-script-hash output structure or not
+    function isP2WSHOutput(bytes memory pkScript) public pure returns (bool) {
+        return pkScript.length == 2 + SHA256_SIZE &&
+            pkScript[0] == OpCodes.OP_0 &&
+            uint8(pkScript[1]) == SHA256_SIZE;
+    }
+
+    /// @notice Check if a raw output script is a pay-to-taproot output
+    /// @notice Reference for implementation: https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki 
+    /// @param pkScript the fragment of the raw transaction containing the raw output script
+    /// @return Whether the script has a pay-to-taproot output structure or not
+    function isP2TROutput(bytes memory pkScript) public pure returns (bool) {
+        return pkScript.length == 2 + TAPROOT_PUBKEY_SIZE &&
+            pkScript[0] == OpCodes.OP_1 &&
+            uint8(pkScript[1]) == TAPROOT_PUBKEY_SIZE;
     }
 
     /// @notice Parse a raw pay-to-public-key-hash output script to get the corresponding address,
@@ -138,8 +185,8 @@ library BtcUtils {
     function parsePayToPubKeyHash(bytes calldata outputScript, bool mainnet) public pure returns (bytes memory) {
         require(isP2PKHOutput(outputScript), "Script hasn't the required structure");
 
-        bytes memory destinationAddress = new bytes(PUBKEY_HASH_SIZE + 1);
-        for(uint8 i = PUBKEY_HASH_START; i < PUBKEY_HASH_SIZE + PUBKEY_HASH_START; i++) {
+        bytes memory destinationAddress = new bytes(HASH160_SIZE + 1);
+        for(uint8 i = PUBKEY_HASH_START; i < HASH160_SIZE + PUBKEY_HASH_START; i++) {
             destinationAddress[i - PUBKEY_HASH_START + 1] = outputScript[i];
         }
 
@@ -156,13 +203,61 @@ library BtcUtils {
     function parsePayToScriptHash(bytes calldata outputScript, bool mainnet) public pure returns (bytes memory) {
         require(isP2SHOutput(outputScript), "Script hasn't the required structure");
 
-        bytes memory destinationAddress = new bytes(SCRIPT_HASH_SIZE + 1);
-        for(uint8 i = SCRIPT_HASH_START; i < SCRIPT_HASH_SIZE + SCRIPT_HASH_START; i++) {
+        bytes memory destinationAddress = new bytes(HASH160_SIZE + 1);
+        for(uint8 i = SCRIPT_HASH_START; i < HASH160_SIZE + SCRIPT_HASH_START; i++) {
             destinationAddress[i - SCRIPT_HASH_START + 1] = outputScript[i];
         }
 
         destinationAddress[0] = mainnet? SCRIPT_HASH_MAINNET_BYTE : SCRIPT_HASH_TESTNET_BYTE;
         return destinationAddress;
+    }
+
+    /// @notice Parse a raw pay-to-witness-pubkey-hash output script to get the corresponding address words,
+    /// the resulting words are only the data part of the bech32 encoding and doesn't include the HRP
+    /// @param outputScript the fragment of the raw transaction containing the raw output script
+    /// @return The address bech32 words generated using the pubkey hash
+    function parsePayToWitnessPubKeyHash(bytes calldata outputScript) public pure returns (bytes memory) {
+        require(isP2WPKHOutput(outputScript), "Script hasn't the required structure"); 
+        uint length = 1 + total5BitWords(HASH160_SIZE);
+        bytes memory result = new bytes(length);
+        result[0] = WITNESS_VERSION_0;
+        bytes memory words = to5BitWords(outputScript[2:]);
+        for (uint i = 1; i < length; i++) {
+            result[i] = words[i - 1];
+        }
+        return result;
+    }
+
+    /// @notice Parse a raw pay-to-witness-script-hash output script to get the corresponding address words,
+    /// the resulting words are only the data part of the bech32 encoding and doesn't include the HRP
+    /// @param outputScript the fragment of the raw transaction containing the raw output script
+    /// @return The address bech32 words generated using the script hash
+    function parsePayToWitnessScriptHash(bytes calldata outputScript) public pure returns (bytes memory) {
+        require(isP2WSHOutput(outputScript), "Script hasn't the required structure");
+        uint length = 1 + total5BitWords(SHA256_SIZE);
+        bytes memory result = new bytes(length);
+        result[0] = WITNESS_VERSION_0;
+        bytes memory words = to5BitWords(outputScript[2:]);
+        for (uint i = 1; i < length; i++) {
+            result[i] = words[i - 1];
+        }
+        return result;
+    }
+
+    /// @notice Parse a raw pay-to-taproot output script to get the corresponding address words,
+    /// the resulting words are only the data part of the bech32m encoding and doesn't include the HRP
+    /// @param outputScript the fragment of the raw transaction containing the raw output script
+    /// @return The address bech32m words generated using the taproot pubkey hash
+    function parsePayToTaproot(bytes calldata outputScript) public pure returns (bytes memory) {
+        require(isP2TROutput(outputScript), "Script hasn't the required structure");
+        uint length = 1 + total5BitWords(TAPROOT_PUBKEY_SIZE);
+        bytes memory result = new bytes(length);
+        result[0] = WITNESS_VERSION_1;
+        bytes memory words = to5BitWords(outputScript[2:]);
+        for (uint i = 1; i < length; i++) {
+            result[i] = words[i - 1];
+        }
+        return result;
     }
 
     /// @notice Parse a raw null-data output script to get its content
@@ -270,5 +365,37 @@ library BtcUtils {
             result += uint8(array[i]) *  uint64(2 ** (8 * (i - (fragmentStart))));
         }
         return result;
+    }
+
+    /// @notice Referece for implementation: https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki
+    function to5BitWords(bytes memory byteArray) private pure returns(bytes memory) {
+        uint8 MAX_VALUE = 31;
+
+        uint currentValue = 0;
+        uint bitCount = 0;
+        uint8 resultIndex = 0;
+        bytes memory result = new bytes(total5BitWords(byteArray.length));
+
+        for (uint i = 0; i < byteArray.length; ++i) {
+            currentValue = (currentValue << BYTE_SIZE) | uint8(byteArray[i]);
+            bitCount += BYTE_SIZE;
+            while (bitCount >= BECH32_WORD_SIZE) {
+                bitCount -= BECH32_WORD_SIZE;
+                // this mask ensures that the result will always have 5 bits
+                result[resultIndex] = bytes1(uint8((currentValue >> bitCount) & MAX_VALUE));
+                resultIndex++;
+            }
+        }
+
+        if (bitCount > 0) {
+            result[resultIndex] = bytes1(uint8((currentValue << (BECH32_WORD_SIZE - bitCount)) & MAX_VALUE));
+        }
+        return result;
+    }
+
+    function total5BitWords(uint numberOfBytes) private pure returns(uint) {
+        uint total = (numberOfBytes * BYTE_SIZE) / BECH32_WORD_SIZE;
+        bool extraWord = (numberOfBytes * BYTE_SIZE) % BECH32_WORD_SIZE == 0;
+        return total + (extraWord? 0 : 1);
     }
 }
