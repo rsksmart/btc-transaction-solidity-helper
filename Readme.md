@@ -1,4 +1,5 @@
 # Bitcoin Transaction Solidity Helper
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/rsksmart/btc-transaction-solidity-helper/badge)](https://scorecard.dev/viewer/?uri=github.com/rsksmart/btc-transaction-solidity-helper)
 
 The intention of this library is to make easier to work with Bitcoin transactions in Solidity smart contracts. Since Rootstock extends Bitcoin's capabilities by enabling smart contracts it is important to be able to work with Bitcoin transactions in them.
 
@@ -29,4 +30,4 @@ These are some features that can increase the library capabilities in the future
  ```solidity
     BtcUtils.TxRawOutput[] memory outputs = BtcUtils.getOutputs(btcTx);
     bytes memory btcTxDestination = BtcUtils.parseNullDataScript(outputs[0].pkScript, false);
- ```  
+ ```
