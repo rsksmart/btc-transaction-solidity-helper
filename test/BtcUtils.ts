@@ -1,10 +1,13 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { BtcUtils as BtcUtilsLib } from "../typechain-types";
+import { bech32, bech32m } from "bech32";
 import * as bs58check from "bs58check";
 import * as p2kph from "./test-data/p2pkh-outputs";
 import * as p2sh from "./test-data/p2sh-outputs";
-import * as b32 from "./test-data/bech32-outputs";
+import * as p2wpkh from "./test-data/p2wpkh-outputs";
+import * as p2wsh from "./test-data/p2wsh-outputs";
+import * as taproot from "./test-data/p2tr-outputs";
 
 type RawTxOutput = {
   value:string
@@ -445,13 +448,13 @@ describe("BtcUtils", function () {
     },
     {
       type: 'P2WSH',
-      raw: '0x0100000000010193a2db37b841b2a46f4e9bb63fe9c1012da3ab7fe30b9f9c974242778b5af8980000000000ffffffff01806fb307000000001976a914bbef244bcad13cffb68b5cef3017c7423675552288ac040047304402203cdcaf02a44e37e409646e8a506724e9e1394b890cb52429ea65bac4cc2403f1022024b934297bcd0c21f22cee0e48751c8b184cc3a0d704cae2684e14858550af7d01483045022100feb4e1530c13e72226dc912dcd257df90d81ae22dbddb5a3c2f6d86f81d47c8e022069889ddb76388fa7948aaa018b2480ac36132009bb9cfade82b651e88b4b137a01695221026ccfb8061f235cc110697c0bfb3afb99d82c886672f6b9b5393b25a434c0cbf32103befa190c0c22e2f53720b1be9476dcf11917da4665c44c9c71c3a2d28a933c352102be46dc245f58085743b1cc37c82f0d63a960efa43b5336534275fc469b49f4ac53ae00000000',
+      raw: '0x0100000001ac7de87ae01110ed6803bb49279886a89cf473bc0bdd48cae960aed59b21ac77000000006b483045022100e12ddb2662bd3c44d482eef808a6fcc84805470c147a477d3b8c9b52b5608be3022060639ddb5690b340f51f935a4a8a1a4151116714c9f84e72791e482840525ca30121029d9286a9c0e8b9e8182d5cc18f3848834c906ed6c6c0b49c86b822f0ed67c9baffffffff016003b80700000000220020615ae01ed1bc1ffaad54da31d7805d0bb55b52dfd3941114330368c1bbf69b4c00000000',
       outputs: [
         {
-          value: 129200000n,
-          pkScript: '0x76a914bbef244bcad13cffb68b5cef3017c7423675552288ac',
-          scriptSize: 25,
-          totalSize: 34n
+          value: 129500000n,
+          pkScript: '0x0020615ae01ed1bc1ffaad54da31d7805d0bb55b52dfd3941114330368c1bbf69b4c',
+          scriptSize: 34,
+          totalSize: 43n
         }
       ]
     }
@@ -477,10 +480,14 @@ describe("BtcUtils", function () {
     });
 
     it('return false if the script is not a P2PKH script', async () => {
-      const testCases = b32.testnetOutputs
-        .concat(b32.mainnetOutputs)
+      const testCases = taproot.testnetOutputs
+        .concat(taproot.mainnetOutputs)
         .concat(p2sh.testnetOutputs)
-        .concat(p2sh.mainnetOutputs);
+        .concat(p2sh.mainnetOutputs)
+        .concat(p2wsh.testnetOutputs)
+        .concat(p2wsh.mainnetOutputs)
+        .concat(p2wpkh.testnetOutputs)
+        .concat(p2wpkh.mainnetOutputs);
       for (const output of testCases) {
         const result = await BtcUtils.isP2PKHOutput(output.script);
         expect(result).to.be.false;
@@ -497,12 +504,88 @@ describe("BtcUtils", function () {
     });
 
     it('return false if the script is not a P2SH script', async () => {
-      const testCases = b32.testnetOutputs
-        .concat(b32.mainnetOutputs)
+      const testCases = taproot.testnetOutputs
+        .concat(taproot.mainnetOutputs)
         .concat(p2kph.testnetOutputs)
-        .concat(p2kph.mainnetOutputs);
+        .concat(p2kph.mainnetOutputs)
+        .concat(p2wsh.testnetOutputs)
+        .concat(p2wsh.mainnetOutputs)
+        .concat(p2wpkh.testnetOutputs)
+        .concat(p2wpkh.mainnetOutputs);
       for (const output of testCases) {
         const result = await BtcUtils.isP2SHOutput(output.script);
+        expect(result).to.be.false;
+      }
+    });
+  });
+
+  describe('isP2WPKHOutput function should', () => {
+    it('return true if the script is a P2WPKH script', async () => {
+      for (const output of p2wpkh.testnetOutputs.concat(p2wpkh.mainnetOutputs)) {
+        const result = await BtcUtils.isP2WPKHOutput(output.script);
+        expect(result).to.be.true;
+      }
+    });
+
+    it('return false if the script is not a P2WPKH script', async () => {
+      const testCases = taproot.testnetOutputs
+        .concat(taproot.mainnetOutputs)
+        .concat(p2kph.testnetOutputs)
+        .concat(p2kph.mainnetOutputs)
+        .concat(p2wsh.testnetOutputs)
+        .concat(p2wsh.mainnetOutputs)
+        .concat(p2sh.testnetOutputs)
+        .concat(p2sh.mainnetOutputs);
+      for (const output of testCases) {
+        const result = await BtcUtils.isP2WPKHOutput(output.script);
+        expect(result).to.be.false;
+      }
+    });
+  });
+
+  describe('isP2WSHOutput function should', () => {
+    it('return true if the script is a P2WSH script', async () => {
+      for (const output of p2wsh.testnetOutputs.concat(p2wsh.mainnetOutputs)) {
+        const result = await BtcUtils.isP2WSHOutput(output.script);
+        expect(result).to.be.true;
+      }
+    });
+
+    it('return false if the script is not a P2WSH script', async () => {
+      const testCases = taproot.testnetOutputs
+        .concat(taproot.mainnetOutputs)
+        .concat(p2kph.testnetOutputs)
+        .concat(p2kph.mainnetOutputs)
+        .concat(p2sh.testnetOutputs)
+        .concat(p2sh.mainnetOutputs)
+        .concat(p2wpkh.testnetOutputs)
+        .concat(p2wpkh.mainnetOutputs);
+      for (const output of testCases) {
+        const result = await BtcUtils.isP2WSHOutput(output.script);
+        expect(result).to.be.false;
+      }
+    });
+  });
+
+  describe('isP2TROutput function should', () => {
+    it('return true if the script is a P2TR script', async () => {
+      for (const output of taproot.testnetOutputs.concat(taproot.mainnetOutputs)) {
+        const result = await BtcUtils.isP2TROutput(output.script);
+        expect(result).to.be.true;
+      }
+    });
+
+    it('return false if the script is not a P2TR script', async () => {
+      const testCases = p2wsh.testnetOutputs
+        .concat(p2wsh.mainnetOutputs)
+        .concat(p2kph.testnetOutputs)
+        .concat(p2kph.mainnetOutputs)
+        .concat(p2sh.testnetOutputs)
+        .concat(p2sh.mainnetOutputs)
+        .concat(p2wpkh.testnetOutputs)
+        .concat(p2wpkh.mainnetOutputs);
+      for (const output of testCases) {
+        const result = await BtcUtils.isP2TROutput(output.script);
         expect(result).to.be.false;
       }
     });
@@ -521,8 +604,8 @@ describe("BtcUtils", function () {
     });
 
     it('fail if script doesn\'t have the required structure', async () => {
-      const testnetCases = b32.testnetOutputs.concat(p2kph.testnetOutputs);
-      const mainnetCases = b32.mainnetOutputs.concat(p2kph.mainnetOutputs);
+      const testnetCases = taproot.testnetOutputs.concat(p2kph.testnetOutputs).concat(p2wsh.testnetOutputs).concat(p2wpkh.testnetOutputs);
+      const mainnetCases = taproot.mainnetOutputs.concat(p2kph.mainnetOutputs).concat(p2wsh.mainnetOutputs).concat(p2wpkh.mainnetOutputs);
       for (const output of testnetCases) {
         await expect(BtcUtils.parsePayToScriptHash(output.script, false)).to.be.revertedWith("Script hasn't the required structure");
       }
@@ -545,13 +628,85 @@ describe("BtcUtils", function () {
     });
 
     it('fail if script doesn\'t have the correct format', async () => {
-      const testnetCases = b32.testnetOutputs.concat(p2sh.testnetOutputs);
-      const mainnetCases = b32.mainnetOutputs.concat(p2sh.mainnetOutputs);
+      const testnetCases = taproot.testnetOutputs.concat(p2sh.testnetOutputs).concat(p2wsh.testnetOutputs).concat(p2wpkh.testnetOutputs);
+      const mainnetCases = taproot.mainnetOutputs.concat(p2sh.mainnetOutputs).concat(p2wsh.mainnetOutputs).concat(p2wpkh.mainnetOutputs);
       for (const output of testnetCases) {
         await expect(BtcUtils.parsePayToPubKeyHash(output.script, false)).to.be.revertedWith("Script hasn't the required structure");
       }
       for (const output of mainnetCases) {
         await expect(BtcUtils.parsePayToPubKeyHash(output.script, true)).to.be.revertedWith("Script hasn't the required structure");
+      }
+    });
+  });
+
+  describe('parsePayToWitnessPubKeyHash function should', () => {
+    it('parse properly the P2WPKH scripts and return the corresponding address', async () => {
+      for (const output of p2wpkh.testnetOutputs) {
+        const address = await BtcUtils.parsePayToWitnessPubKeyHash(output.script);
+        expect(bech32.encode('tb', ethers.getBytes(address))).to.equal(output.address);
+      }
+      for (const output of p2wpkh.mainnetOutputs) {
+        const address = await BtcUtils.parsePayToWitnessPubKeyHash(output.script);
+        expect(bech32.encode('bc', ethers.getBytes(address))).to.equal(output.address);
+      }
+    });
+
+    it('fail if script doesn\'t have the correct format', async () => {
+      const testnetCases = taproot.testnetOutputs.concat(p2sh.testnetOutputs).concat(p2wsh.testnetOutputs).concat(p2kph.testnetOutputs);
+      const mainnetCases = taproot.mainnetOutputs.concat(p2sh.mainnetOutputs).concat(p2wsh.mainnetOutputs).concat(p2kph.mainnetOutputs);
+      for (const output of testnetCases) {
+        await expect(BtcUtils.parsePayToWitnessPubKeyHash(output.script)).to.be.revertedWith("Script hasn't the required structure");
+      }
+      for (const output of mainnetCases) {
+        await expect(BtcUtils.parsePayToWitnessPubKeyHash(output.script)).to.be.revertedWith("Script hasn't the required structure");
+      }
+    });
+  });
+
+  describe('parsePayToWitnessScriptHash function should', () => {
+    it('parse properly the P2WSH scripts and return the corresponding address', async () => {
+      for (const output of p2wsh.testnetOutputs) {
+        const address = await BtcUtils.parsePayToWitnessScriptHash(output.script);
+        expect(bech32.encode('tb', ethers.getBytes(address))).to.equal(output.address);
+      }
+      for (const output of p2wsh.mainnetOutputs) {
+        const address = await BtcUtils.parsePayToWitnessScriptHash(output.script);
+        expect(bech32.encode('bc', ethers.getBytes(address))).to.equal(output.address);
+      }
+    });
+
+    it('fail if script doesn\'t have the correct format', async () => {
+      const testnetCases = taproot.testnetOutputs.concat(p2sh.testnetOutputs).concat(p2wpkh.testnetOutputs).concat(p2kph.testnetOutputs);
+      const mainnetCases = taproot.mainnetOutputs.concat(p2sh.mainnetOutputs).concat(p2wpkh.mainnetOutputs).concat(p2kph.mainnetOutputs);
+      for (const output of testnetCases) {
+        await expect(BtcUtils.parsePayToWitnessScriptHash(output.script)).to.be.revertedWith("Script hasn't the required structure");
+      }
+      for (const output of mainnetCases) {
+        await expect(BtcUtils.parsePayToWitnessScriptHash(output.script)).to.be.revertedWith("Script hasn't the required structure");
+      }
+    });
+  });
+
+  describe('parsePayToTaproot function should', () => {
+    it('parse properly the P2TR scripts and return the corresponding address', async () => {
+      for (const output of taproot.testnetOutputs) {
+        const address = await BtcUtils.parsePayToTaproot(output.script);
+        expect(bech32m.encode('tb', ethers.getBytes(address))).to.equal(output.address);
+      }
+      for (const output of taproot.mainnetOutputs) {
+        const address = await BtcUtils.parsePayToTaproot(output.script);
+        expect(bech32m.encode('bc', ethers.getBytes(address))).to.equal(output.address);
+      }
+    });
+
+    it('fail if script doesn\'t have the correct format', async () => {
+      const testnetCases = p2wsh.testnetOutputs.concat(p2sh.testnetOutputs).concat(p2wpkh.testnetOutputs).concat(p2kph.testnetOutputs);
+      const mainnetCases = p2wsh.mainnetOutputs.concat(p2sh.mainnetOutputs).concat(p2wpkh.mainnetOutputs).concat(p2kph.mainnetOutputs);
+      for (const output of testnetCases) {
+        await expect(BtcUtils.parsePayToTaproot(output.script)).to.be.revertedWith("Script hasn't the required structure");
+      }
+      for (const output of mainnetCases) {
+        await expect(BtcUtils.parsePayToTaproot(output.script)).to.be.revertedWith("Script hasn't the required structure");
       }
     });
   });
@@ -566,15 +721,27 @@ describe("BtcUtils", function () {
         const address = await BtcUtils.outputScriptToAddress(output.script, true);
         expect(bs58check.encode(ethers.getBytes(address))).to.equal(output.address);
       }
+      for (const output of p2wpkh.mainnetOutputs.concat(p2wsh.mainnetOutputs)) {
+        const address = await BtcUtils.outputScriptToAddress(output.script, true);
+        expect(bech32.encode('bc', ethers.getBytes(address))).to.equal(output.address);
+      }
+      for (const output of p2wpkh.testnetOutputs.concat(p2wsh.testnetOutputs)) {
+        const address = await BtcUtils.outputScriptToAddress(output.script, false);
+        expect(bech32.encode('tb', ethers.getBytes(address))).to.equal(output.address);
+      }
+      for (const output of taproot.mainnetOutputs) {
+        const address = await BtcUtils.outputScriptToAddress(output.script, true);
+        expect(bech32m.encode('bc', ethers.getBytes(address))).to.equal(output.address);
+      }
+      for (const output of taproot.testnetOutputs) {
+        const address = await BtcUtils.outputScriptToAddress(output.script, false);
+        expect(bech32m.encode('tb', ethers.getBytes(address))).to.equal(output.address);
+      }
     });
 
     it('fail if is an unsupported script type or script type cannot be converted to address', async() => {
-      for (const output of b32.mainnetOutputs) {
-        await expect(BtcUtils.outputScriptToAddress(output.script, true)).to.be.revertedWith("Unsupported script type");
-      }
-      for (const output of b32.testnetOutputs) {
-        await expect(BtcUtils.outputScriptToAddress(output.script, false)).to.be.revertedWith("Unsupported script type");
-      }
+      await expect(BtcUtils.outputScriptToAddress("0x0102030405", true)).to.be.revertedWith("Unsupported script type");
+      await expect(BtcUtils.outputScriptToAddress("0x6a2448617468e76bc64be388085f432feb343fd758e1488af93af3df863092b28b3e40d60aec", false)).to.be.revertedWith("Unsupported script type");
     });
   });
 });

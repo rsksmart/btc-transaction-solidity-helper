@@ -9,4 +9,7 @@ library OpCodes {
     bytes1 public constant OP_CHECKSIG = 0xac;
     bytes1 public constant OP_RETURN = 0x6a;
     bytes1 public constant OP_EQUAL = 0x87;
+
+    bytes1 public constant OP_0 = 0x00;
+    bytes1 public constant OP_1 = 0x51;
 }
