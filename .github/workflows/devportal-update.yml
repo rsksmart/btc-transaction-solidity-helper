@@ -5,7 +5,7 @@ on:
     paths:
       - 'README.md'
     branches:
-      - devportalTest
+      - main
 
 jobs:
   update-docs:
