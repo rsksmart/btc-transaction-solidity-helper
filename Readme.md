@@ -13,6 +13,7 @@ The features of this library include:
 * Bitcoin address validation: is able to validate if a Bitcoin address is of a given type or not.
 
 ### Future features
+
 These are some features that can increase the library capabilities in the future:
 * Bitcoin transaction input parsing: should be able to receive a raw tx and return an array of structs with the tx inputs
 * Bitcoin transaction creation: utilities for building a raw transaction inside a contract
