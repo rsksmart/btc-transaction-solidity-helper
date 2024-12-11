@@ -15,6 +15,11 @@ The features of the Bitcoin Solidity Helper library include:
 4. Bitcoin address generation: is able to generate Bitcoin the address from a specific script and also to validate if a given address was generated from a script or not.
 5. Bitcoin address validation: This checks if a Bitcoin address conforms to a particular type or format. It validates if a Bitcoin address is of a given type or not.
 
+## Versioning
+Current version is ![npm version](https://img.shields.io/npm/v/@rsksmart/btc-transaction-solidity-helper.svg)
+
+To check the NPM package, please check [Bitcoin Solidity Helper NPM Package.](https://www.npmjs.com/.package/@rsksmart/btc-transaction-solidity-helper)
+
 ## Prerequisites
 * Knowledge of Solidity and how to write smart contracts.
 * [Bitcoin Solidity Helper Package](https://github.com/rsksmart/btc-transaction-solidity-helper/pkgs/npm/btc-transaction-solidity-helper)
@@ -160,3 +165,9 @@ Congratulations, we have successfully learnt how to use the Solidity Helper libr
 **Some future enhancements to the library includes:**
 * Transaction Input Parsing: The ability to extract and analyze transaction input data to receive a raw tx and return an array of structs with the tx inputs.
 * Transaction Creation: Utilities to facilitate the creation of raw Bitcoin transactions within smart contracts.
+
+## Contribution Guidelines
+* Please refer to the Rootstock Contribution Guidelines for more information on how to contribute to this project.
+
+## License:
+MIT License - Copyright (c) 2023 Rootstock
