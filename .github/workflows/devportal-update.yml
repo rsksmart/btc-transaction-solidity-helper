@@ -5,7 +5,7 @@ on:
     paths:
       - 'README.md'
     branches:
-      - main
+      - staging
 
 jobs:
   update-docs:
@@ -57,7 +57,7 @@ jobs:
           git commit -m "Automated update from repository"
           # Configure the remote URL with the token for authentication
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/rsksmart/devportal.git
-          git push -f origin update-from-foundry-starter
+          git push -f origin update-from-btc-transaction-solidity-helper
 
       # Step 4: Create a Pull Request in the Devportal Repository
       - name: Create Pull Request
