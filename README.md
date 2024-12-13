@@ -1,5 +1,5 @@
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/rsksmart/btc-transaction-solidity-helper/badge)](https://scorecard.dev/viewer/?uri=github.com/rsksmart/btc-transaction-solidity-helper)
-<img src="img/rootstock-logo.png" alt="RSK Logo" style="width:100%; height: auto;" />
+<img src="img/rootstock-docs.png" alt="RSK Logo" style="width:100%; height: auto;" />
 
 # BTC Transaction Solidity Helper
 
