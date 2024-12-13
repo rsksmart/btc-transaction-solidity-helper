@@ -31,8 +31,8 @@ jobs:
         run: |
           mkdir -p transformed
 
-          # Remove the unwanted <img> tag from README.md
-          sed '/<img src="img\/rootstock-logo.png" alt="RSK Logo" style="width:100%; height: auto;" \/>/d' README.md > temp_README.md
+          # Remove the unwanted lines from README.md
+          tail -n +3 README.md > temp_README.md
           
           # Process README.md
           echo "---" > transformed/README.md
@@ -51,7 +51,7 @@ jobs:
 
           # Clean up temporary file
           rm temp_README.md
-          
+
           cp transformed/README.md devportal/docs/02-developers/08-libraries/bitcoin-tx-solidity-helper.md
 
       # Step 3: Commit and Push Changes to Devportal Repository
