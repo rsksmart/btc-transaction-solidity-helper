@@ -106,6 +106,7 @@ require(expectedValue <= outputs[0].value, "incorrect amount");
 The value field of the output structure is in satoshis.
 :::
 
+
 ## Hashing Transactions
 The hash algorithm used in the Bitcoin Network is just the `SHA256(SHA256())` of the serialized transaction. The library exposes one function that will apply this hash algorithm to any byte array passed to it, making it easy to calculate the transaction id of any raw transaction present in the contract.
 
