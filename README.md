@@ -1,7 +1,5 @@
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/rsksmart/btc-transaction-solidity-helper/badge)](https://scorecard.dev/viewer/?uri=github.com/rsksmart/btc-transaction-solidity-helper)
 
-<img src="rootstock-logo.png" alt="RSK Logo" style="width:100%; height: auto;" />
-
 # BTC Transaction Solidity Helper
 
 Bitcoin, a decentralized digital currency, serves as both a store of value and a means of transferring wealth. Its security is rooted in the blockchain, a distributed ledger maintained by a network of miners. These miners expend significant computational power and energy to create new blocks, which are added to the blockchain every 10 minutes. The more hashing power contributed by miners, the more secure the network becomes. [Learn more about Bitcoin](https://developer.bitcoin.org/index.html).
