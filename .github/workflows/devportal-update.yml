@@ -31,6 +31,9 @@ jobs:
         run: |
           mkdir -p transformed
 
+          # Remove the unwanted <img> tag from README.md
+          sed '/<img src="img\/rootstock-logo.png" alt="RSK Logo" style="width:100%; height: auto;" \/>/d' README.md > temp_README.md
+          
           # Process README.md
           echo "---" > transformed/README.md
           echo "sidebar_label: Bitcoin Transaction Solidity Helper Library" >> transformed/README.md
@@ -44,7 +47,11 @@ jobs:
           echo "If you wish to suggest changes on this document, please open a PR on the [Bitcoin Transaction Solidity Helper](https://github.com/rsksmart/btc-transaction-solidity-helper.git)" >> transformed/README.md
           echo ":::" >> transformed/README.md
           echo "" >> transformed/README.md
-          cat README.md >> transformed/README.md
+          cat temp_README.md >> transformed/README.md
+
+          # Clean up temporary file
+          rm temp_README.md
+          
           cp transformed/README.md devportal/docs/02-developers/08-libraries/bitcoin-tx-solidity-helper.md
 
       # Step 3: Commit and Push Changes to Devportal Repository
