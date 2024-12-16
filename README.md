@@ -14,7 +14,7 @@ The [Bitcoin Solidity helper library](https://github.com/rsksmart/btc-transactio
 The features of the Bitcoin Solidity Helper library include:
 1. Bitcoin transaction output parsing: This accurately extracts and organizes transaction outputs from raw Bitcoin transactions. It is able to receive a raw tx and return an array of structures with the tx outputs.
 2. Bitcoin transaction hashing: This calculates the cryptographic hash of a Bitcoin transaction, ensuring its authenticity and integrity. It receives a raw tx and returns its hash.
-3. Bitcoin transaction output script validation: This verifies the validity and type of output scripts within a Bitcoin transaction, allowing for specific data extraction. It receives a raw output script, validates that it is from a specific type and returns a result. E.g. receive a raw null-data script and return the embedded data in it
+3. Bitcoin transaction output script validation: This verifies the validity and type of output scripts within a Bitcoin transaction, allowing for specific data extraction. It receives a raw output script, validates that it is from a specific type and returns a result. E.g. receive a raw null-data script and return the embedded data in it.
 4. Bitcoin address generation: is able to generate Bitcoin the address from a specific script and also to validate if a given address was generated from a script or not.
 5. Bitcoin address validation: This checks if a Bitcoin address conforms to a particular type or format. It validates if a Bitcoin address is of a given type or not.
 
@@ -25,7 +25,7 @@ To check the NPM package, please check [Bitcoin Solidity Helper NPM Package.](ht
 
 ## Prerequisites
 * Knowledge of Solidity and how to write smart contracts.
-* [Bitcoin Solidity Helper Package](https://github.com/rsksmart/btc-transaction-solidity-helper/pkgs/npm/btc-transaction-solidity-helper)
+* [Bitcoin Solidity Helper Package.](https://github.com/rsksmart/btc-transaction-solidity-helper/pkgs/npm/btc-transaction-solidity-helper)
 
 ## Setup
 To setup the Solidity helper library in your project, run the following npm command:
