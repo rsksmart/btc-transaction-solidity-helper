@@ -175,4 +175,4 @@ Congratulations, we have successfully learnt how to use the Solidity Helper libr
 * Please refer to the Rootstock Contribution Guidelines for more information on how to contribute to this project.
 
 ## License:
-MIT License - Copyright (c) 2023 Rootstock
+MIT License - Copyright (c) 2023 Rootstock.
