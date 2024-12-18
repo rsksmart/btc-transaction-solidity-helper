@@ -131,7 +131,7 @@ uint confirmations = bridge.getBtcTransactionConfirmations(
 require(confirmations > expectedConfirmations, "not enough confirmations");
 ```
 
-Read more about the [bridge functionality](https://github.com/rsksmart/rskj/blob/master/rskj-core/src/main/java/co/rsk/peg/BridgeSupport.java)
+Read more about the [bridge functionality.](https://github.com/rsksmart/rskj/blob/master/rskj-core/src/main/java/co/rsk/peg/BridgeSupport.java)
 
 ## Script Validation for Bitcoin Transaction Output
 In the Bitcoin network, when a user wants to send funds to another, the user creates a transaction and adds an output with the value that it wants to send. The other user doesn’t “receive” this amount directly, instead, we call receiving to the ability of providing the proper input to the output script so it returns `true`:
