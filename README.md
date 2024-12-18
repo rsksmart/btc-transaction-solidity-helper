@@ -137,6 +137,7 @@ Read more about the [bridge functionality.](https://github.com/rsksmart/rskj/blo
 In the Bitcoin network, when a user wants to send funds to another, the user creates a transaction and adds an output with the value that it wants to send. The other user doesn’t “receive” this amount directly, instead, we call receiving to the ability of providing the proper input to the output script so it returns `true`:
 
 <Quote caption="Bitcoin Script Documentation">
+
   A transaction is valid if nothing in the combined script triggers failure and the top stack item is True (non-zero) when the script exits. Read more info in [Bitcoin Script](https://en.bitcoin.it/wiki/Script)
 </Quote>
 
