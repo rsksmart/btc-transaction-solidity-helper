@@ -59,7 +59,7 @@ library BtcUtils {
         if (rawTx[4] == 0x00 && rawTx[5] == 0x01) { // if its segwit, skip marker and flag
             currentPosition = 6;
         }
-        
+
         (uint64 inputCount, uint16 inputCountSize) = parseCompactSizeInt(currentPosition, rawTx);
         currentPosition += inputCountSize;
 
@@ -167,7 +167,7 @@ library BtcUtils {
     }
 
     /// @notice Check if a raw output script is a pay-to-taproot output
-    /// @notice Reference for implementation: https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki 
+    /// @notice Reference for implementation: https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki
     /// @param pkScript the fragment of the raw transaction containing the raw output script
     /// @return Whether the script has a pay-to-taproot output structure or not
     function isP2TROutput(bytes memory pkScript) public pure returns (bool) {
@@ -180,7 +180,7 @@ library BtcUtils {
     /// the resulting byte array doesn't include the checksum bytes of the base58check encoding at
     /// the end
     /// @param outputScript the fragment of the raw transaction containing the raw output script
-    /// @param mainnet if the address to generate is from mainnet or testnet 
+    /// @param mainnet if the address to generate is from mainnet or testnet
     /// @return The address generated using the receiver's public key hash
     function parsePayToPubKeyHash(bytes calldata outputScript, bool mainnet) public pure returns (bytes memory) {
         require(isP2PKHOutput(outputScript), "Script hasn't the required structure");
@@ -217,13 +217,12 @@ library BtcUtils {
     /// @param outputScript the fragment of the raw transaction containing the raw output script
     /// @return The address bech32 words generated using the pubkey hash
     function parsePayToWitnessPubKeyHash(bytes calldata outputScript) public pure returns (bytes memory) {
-        require(isP2WPKHOutput(outputScript), "Script hasn't the required structure"); 
-        uint length = 1 + total5BitWords(HASH160_SIZE);
+        require(isP2WPKHOutput(outputScript), "Script hasn't the required structure");
+        uint length = 1 + HASH160_SIZE;
         bytes memory result = new bytes(length);
         result[0] = WITNESS_VERSION_0;
-        bytes memory words = to5BitWords(outputScript[2:]);
         for (uint i = 1; i < length; i++) {
-            result[i] = words[i - 1];
+            result[i] = outputScript[i + 1];
         }
         return result;
     }
@@ -234,12 +233,11 @@ library BtcUtils {
     /// @return The address bech32 words generated using the script hash
     function parsePayToWitnessScriptHash(bytes calldata outputScript) public pure returns (bytes memory) {
         require(isP2WSHOutput(outputScript), "Script hasn't the required structure");
-        uint length = 1 + total5BitWords(SHA256_SIZE);
+        uint length = 1 + SHA256_SIZE;
         bytes memory result = new bytes(length);
         result[0] = WITNESS_VERSION_0;
-        bytes memory words = to5BitWords(outputScript[2:]);
         for (uint i = 1; i < length; i++) {
-            result[i] = words[i - 1];
+            result[i] = outputScript[i + 1];
         }
         return result;
     }
@@ -250,18 +248,17 @@ library BtcUtils {
     /// @return The address bech32m words generated using the taproot pubkey hash
     function parsePayToTaproot(bytes calldata outputScript) public pure returns (bytes memory) {
         require(isP2TROutput(outputScript), "Script hasn't the required structure");
-        uint length = 1 + total5BitWords(TAPROOT_PUBKEY_SIZE);
+        uint length = 1 + TAPROOT_PUBKEY_SIZE;
         bytes memory result = new bytes(length);
         result[0] = WITNESS_VERSION_1;
-        bytes memory words = to5BitWords(outputScript[2:]);
         for (uint i = 1; i < length; i++) {
-            result[i] = words[i - 1];
+            result[i] = outputScript[i + 1];
         }
         return result;
     }
 
     /// @notice Parse a raw null-data output script to get its content
-    /// @param outputScript the fragment of the raw transaction containing the raw output script 
+    /// @param outputScript the fragment of the raw transaction containing the raw output script
     /// @return The content embedded inside the script
     function parseNullDataScript(bytes calldata outputScript) public pure returns (bytes memory) {
         require(outputScript.length > 1,"Invalid size");
@@ -271,7 +268,7 @@ library BtcUtils {
 
     /// @notice Hash a bitcoin raw transaction to get its id (reversed double sha256)
     /// @param btcTx the transaction to hash
-    /// @return The transaction id 
+    /// @return The transaction id
     function hashBtcTx(bytes calldata btcTx) public pure returns (bytes32) {
         bytes memory doubleSha256 = abi.encodePacked(sha256(abi.encodePacked(sha256(btcTx))));
         bytes1 aux;
@@ -340,7 +337,7 @@ library BtcUtils {
         } else if (maxSize <= MAX_COMPACT_SIZE_LENGTH) {
             return (maxSize, 1);
         }
-        
+
         uint compactSizeBytes = 2 ** (maxSize - MAX_COMPACT_SIZE_LENGTH);
         require(compactSizeBytes <= MAX_BYTES_USED_FOR_COMPACT_SIZE, "unsupported compact size length");
 
@@ -357,7 +354,7 @@ library BtcUtils {
         bytes memory array
     ) private pure returns (uint) {
         require(
-            fragmentStart < array.length && fragmentEnd < array.length, 
+            fragmentStart < array.length && fragmentEnd < array.length,
             "Range can't be bigger than array"
         );
         uint result = 0;
@@ -365,37 +362,5 @@ library BtcUtils {
             result += uint8(array[i]) *  uint64(2 ** (8 * (i - (fragmentStart))));
         }
         return result;
-    }
-
-    /// @notice Referece for implementation: https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki
-    function to5BitWords(bytes memory byteArray) private pure returns(bytes memory) {
-        uint8 MAX_VALUE = 31;
-
-        uint currentValue = 0;
-        uint bitCount = 0;
-        uint8 resultIndex = 0;
-        bytes memory result = new bytes(total5BitWords(byteArray.length));
-
-        for (uint i = 0; i < byteArray.length; ++i) {
-            currentValue = (currentValue << BYTE_SIZE) | uint8(byteArray[i]);
-            bitCount += BYTE_SIZE;
-            while (bitCount >= BECH32_WORD_SIZE) {
-                bitCount -= BECH32_WORD_SIZE;
-                // this mask ensures that the result will always have 5 bits
-                result[resultIndex] = bytes1(uint8((currentValue >> bitCount) & MAX_VALUE));
-                resultIndex++;
-            }
-        }
-
-        if (bitCount > 0) {
-            result[resultIndex] = bytes1(uint8((currentValue << (BECH32_WORD_SIZE - bitCount)) & MAX_VALUE));
-        }
-        return result;
-    }
-
-    function total5BitWords(uint numberOfBytes) private pure returns(uint) {
-        uint total = (numberOfBytes * BYTE_SIZE) / BECH32_WORD_SIZE;
-        bool extraWord = (numberOfBytes * BYTE_SIZE) % BECH32_WORD_SIZE == 0;
-        return total + (extraWord? 0 : 1);
     }
 }
