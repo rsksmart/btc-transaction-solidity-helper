@@ -2,9 +2,8 @@ name: CI
 
 on:
   push:
-    branches: [ main, Stable-Test, QA-Test ]
+    branches: [ QA-Test, Stable-Test, master ]
   pull_request:
-    branches: [ main, Stable-Test, QA-Test ]
   workflow_dispatch:
 
 permissions:

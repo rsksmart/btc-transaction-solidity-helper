@@ -23,7 +23,7 @@ type RawOutputs = {
 
 describe("BtcUtils", function () {
   let BtcUtils:BtcUtilsLib;
-  
+
   before(async () => {
     const BtcUtilsFactory = await ethers.getContractFactory("BtcUtils");
     BtcUtils = await BtcUtilsFactory.deploy();
@@ -643,11 +643,15 @@ describe("BtcUtils", function () {
     it('parse properly the P2WPKH scripts and return the corresponding address', async () => {
       for (const output of p2wpkh.testnetOutputs) {
         const address = await BtcUtils.parsePayToWitnessPubKeyHash(output.script);
-        expect(bech32.encode('tb', ethers.getBytes(address))).to.equal(output.address);
+        const bytes = ethers.getBytes(address);
+        const words = bech32.toWords(bytes.slice(1));
+        expect(bech32.encode('tb', new Uint8Array([bytes[0], ...words]))).to.equal(output.address);
       }
       for (const output of p2wpkh.mainnetOutputs) {
         const address = await BtcUtils.parsePayToWitnessPubKeyHash(output.script);
-        expect(bech32.encode('bc', ethers.getBytes(address))).to.equal(output.address);
+        const bytes = ethers.getBytes(address);
+        const words = bech32.toWords(bytes.slice(1));
+        expect(bech32.encode('bc', new Uint8Array([bytes[0], ...words]))).to.equal(output.address);
       }
     });
 
@@ -667,11 +671,15 @@ describe("BtcUtils", function () {
     it('parse properly the P2WSH scripts and return the corresponding address', async () => {
       for (const output of p2wsh.testnetOutputs) {
         const address = await BtcUtils.parsePayToWitnessScriptHash(output.script);
-        expect(bech32.encode('tb', ethers.getBytes(address))).to.equal(output.address);
+        const bytes = ethers.getBytes(address);
+        const words = bech32.toWords(bytes.slice(1));
+        expect(bech32.encode('tb', new Uint8Array([bytes[0], ...words]))).to.equal(output.address);
       }
       for (const output of p2wsh.mainnetOutputs) {
         const address = await BtcUtils.parsePayToWitnessScriptHash(output.script);
-        expect(bech32.encode('bc', ethers.getBytes(address))).to.equal(output.address);
+        const bytes = ethers.getBytes(address);
+        const words = bech32.toWords(bytes.slice(1));
+        expect(bech32.encode('bc', new Uint8Array([bytes[0], ...words]))).to.equal(output.address);
       }
     });
 
@@ -691,11 +699,15 @@ describe("BtcUtils", function () {
     it('parse properly the P2TR scripts and return the corresponding address', async () => {
       for (const output of taproot.testnetOutputs) {
         const address = await BtcUtils.parsePayToTaproot(output.script);
-        expect(bech32m.encode('tb', ethers.getBytes(address))).to.equal(output.address);
+        const bytes = ethers.getBytes(address);
+        const words = bech32m.toWords(bytes.slice(1));
+        expect(bech32m.encode('tb', new Uint8Array([bytes[0], ...words]))).to.equal(output.address);
       }
       for (const output of taproot.mainnetOutputs) {
         const address = await BtcUtils.parsePayToTaproot(output.script);
-        expect(bech32m.encode('bc', ethers.getBytes(address))).to.equal(output.address);
+        const bytes = ethers.getBytes(address);
+        const words = bech32m.toWords(bytes.slice(1));
+        expect(bech32m.encode('bc', new Uint8Array([bytes[0], ...words]))).to.equal(output.address);
       }
     });
 
@@ -723,19 +735,27 @@ describe("BtcUtils", function () {
       }
       for (const output of p2wpkh.mainnetOutputs.concat(p2wsh.mainnetOutputs)) {
         const address = await BtcUtils.outputScriptToAddress(output.script, true);
-        expect(bech32.encode('bc', ethers.getBytes(address))).to.equal(output.address);
+        const bytes = ethers.getBytes(address);
+        const words = bech32.toWords(bytes.slice(1));
+        expect(bech32.encode('bc', new Uint8Array([bytes[0], ...words]))).to.equal(output.address);
       }
       for (const output of p2wpkh.testnetOutputs.concat(p2wsh.testnetOutputs)) {
         const address = await BtcUtils.outputScriptToAddress(output.script, false);
-        expect(bech32.encode('tb', ethers.getBytes(address))).to.equal(output.address);
+        const bytes = ethers.getBytes(address);
+        const words = bech32.toWords(bytes.slice(1));
+        expect(bech32.encode('tb', new Uint8Array([bytes[0], ...words]))).to.equal(output.address);
       }
       for (const output of taproot.mainnetOutputs) {
         const address = await BtcUtils.outputScriptToAddress(output.script, true);
-        expect(bech32m.encode('bc', ethers.getBytes(address))).to.equal(output.address);
+        const bytes = ethers.getBytes(address);
+        const words = bech32m.toWords(bytes.slice(1));
+        expect(bech32m.encode('bc', new Uint8Array([bytes[0], ...words]))).to.equal(output.address);
       }
       for (const output of taproot.testnetOutputs) {
         const address = await BtcUtils.outputScriptToAddress(output.script, false);
-        expect(bech32m.encode('tb', ethers.getBytes(address))).to.equal(output.address);
+        const bytes = ethers.getBytes(address);
+        const words = bech32m.toWords(bytes.slice(1));
+        expect(bech32m.encode('tb', new Uint8Array([bytes[0], ...words]))).to.equal(output.address);
       }
     });
 
