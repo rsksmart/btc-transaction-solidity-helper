@@ -13,9 +13,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    env:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
     steps:
       - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
 
@@ -36,11 +33,18 @@ jobs:
       - name: Unit test smart contracts with coverage
         run: npm run test:coverage
 
-      # Skipped when CODECOV_TOKEN is absent: fork PRs get no secrets, and the token does not exist yet (FLY-2600).
+      # Gates the upload: fork PRs get no secrets, and this repo has no CODECOV_TOKEN yet (Codecov onboarding pending).
+      - name: Check for Codecov token
+        id: codecov-token
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        run: |
+          [ -n "$CODECOV_TOKEN" ] && echo "present=true" >> "$GITHUB_OUTPUT" || echo "present=false" >> "$GITHUB_OUTPUT"
+
       - name: Upload coverage to Codecov
-        if: ${{ env.CODECOV_TOKEN != '' }}
+        if: steps.codecov-token.outputs.present == 'true'
         uses: codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac # v5.5.5
         with:
-          token: ${{ env.CODECOV_TOKEN }}
+          token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage/lcov.info
           fail_ci_if_error: true
