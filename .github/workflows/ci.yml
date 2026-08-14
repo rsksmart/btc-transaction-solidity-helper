@@ -33,13 +33,17 @@ jobs:
       - name: Unit test smart contracts with coverage
         run: npm run test:coverage
 
-      # Gates the upload: fork PRs get no secrets, and this repo has no CODECOV_TOKEN until Codecov onboarding (FLY-2600).
+      # Gates the upload: fork PRs get no secrets, and this repo has no CODECOV_TOKEN until Codecov onboarding lands.
       - name: Check for Codecov token
         id: codecov-token
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         run: |
           [ -n "$CODECOV_TOKEN" ] && echo "present=true" >> "$GITHUB_OUTPUT" || echo "present=false" >> "$GITHUB_OUTPUT"
+
+      - name: TEMP expression probe - delete before merge
+        if: steps.codecov-token.outputs.present == 'false'
+        run: echo "hyphenated step id resolved via dot notation"
 
       - name: Upload coverage to Codecov
         if: steps.codecov-token.outputs.present == 'true'
