@@ -33,7 +33,7 @@ jobs:
       - name: Unit test smart contracts with coverage
         run: npm run test:coverage
 
-      # Gates the upload: fork PRs get no secrets, and this repo has no CODECOV_TOKEN yet (Codecov onboarding pending).
+      # Gates the upload: fork PRs get no secrets, and this repo has no CODECOV_TOKEN until Codecov onboarding (FLY-2600).
       - name: Check for Codecov token
         id: codecov-token
         env:
